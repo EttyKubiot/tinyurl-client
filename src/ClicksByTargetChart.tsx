@@ -13,7 +13,6 @@ import {
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Tooltip, Legend);
 
-const API_URL = 'http://localhost:3000/api/clicks-by-target'; // שנה לכתובת שלך במידת הצורך
 
 interface ClicksData {
   labels: string[];
@@ -21,23 +20,36 @@ interface ClicksData {
 }
 
 interface ClicksByTargetChartProps {
+  linkId: string;
   type?: 'bar' | 'pie';
 }
 
-const ClicksByTargetChart: React.FC<ClicksByTargetChartProps> = ({ type = 'bar' }) => {
+const ClicksByTargetChart: React.FC<ClicksByTargetChartProps> = ({ linkId, type = 'bar' }) => {
+  console.log('linkId:', linkId);
+
+  const API_URL = `http://localhost:3000/api/links/${linkId}/clicks-by-target`;
   const [data, setData] = useState<ClicksData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    axios.get<ClicksData>(API_URL)
+    axios.get<Record<string, number>>(API_URL)
       .then((res) => {
-        setData(res.data);
+        const raw = res.data;
+        const labels = Object.keys(raw);
+        const values = Object.values(raw);
+  
+        console.log('raw:', raw);
+        console.log('labels:', labels);
+        console.log('values:', values);
+  
+        setData({ labels, values });
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error('שגיאה בבקשת axios:', err);
         setError('שגיאה בטעינת הנתונים');
       });
   }, []);
-
+  
   if (error) {
     return <div style={{ color: 'red' }}>{error}</div>;
   }
